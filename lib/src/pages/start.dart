@@ -28,7 +28,7 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage>
-    with RecentFilesState, NotesDirectoryState, PlatformOpenHandler, RestorationMixin {
+    with RecentFilesState, PlatformOpenHandler, RestorationMixin {
   @override
   Widget build(BuildContext context) => UnmanagedRestorationScope(
       bucket: bucket,
@@ -64,7 +64,10 @@ class _StartPageState extends State<StartPage>
           ),
         ],
         const PopupMenuDivider(),
-        notesDatabaseMenuItem(context),
+        PopupMenuItem<VoidCallback>(
+          child: NotesDatabaseMenu(),
+        ),
+        //NotesDatabaseMenu(context),
         const PopupMenuDivider(),
         PopupMenuItem<VoidCallback>(
           value: () => openAboutDialog(context),

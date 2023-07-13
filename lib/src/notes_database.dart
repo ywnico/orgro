@@ -49,12 +49,37 @@ class NotesDirectory {
   }
 }
 
-mixin NotesDirectoryState<T extends StatefulWidget> on State<T> {
+class NotesDatabase extends InheritedWidget {
+  const NotesDatabase(
+      this.notesDirectory,
+      // TODO add id link database
+      {
+        required this.setNotesDirectory,
+        required this.removeNotesDirectory,
+        required super.child,
+        super.key,
+      });
+
+  final NotesDirectory? notesDirectory;
+  final ValueChanged<NotesDirectory> setNotesDirectory;
+  final Function removeNotesDirectory; // TODO is this the right type?
+
+  @override
+  bool updateShouldNotify(NotesDatabase oldWidget) =>
+      notesDirectory != oldWidget.notesDirectory ||
+          setNotesDirectory != oldWidget.setNotesDirectory ||
+          removeNotesDirectory != oldWidget.removeNotesDirectory;
+
+  static NotesDatabase of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<NotesDatabase>()!;
+}
+
+mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   Preferences get _prefs => Preferences.of(context);
   late NotesDirectory? _notesDirectory;
   _LifecycleEventHandler? _lifecycleEventHandler;
 
-  bool get hasNotesDirectory => (_notesDirectory == null);
+  bool get hasNotesDirectory => (_notesDirectory != null);
 
   void setNotesDirectory(NotesDirectory newNotesDirectory) {
     if (newNotesDirectory == _notesDirectory) {
@@ -116,6 +141,16 @@ mixin NotesDirectoryState<T extends StatefulWidget> on State<T> {
 
   void _onResume() {
     // TODO (maybe)
+  }
+
+  Widget buildWithNotesDatabase({required WidgetBuilder builder}) {
+    return NotesDatabase(
+      _notesDirectory,
+      setNotesDirectory: setNotesDirectory,
+      removeNotesDirectory: removeNotesDirectory,
+      // Builder required to get NotesDatabase into context
+      child: Builder(builder: builder),
+    );
   }
 
 }

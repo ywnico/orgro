@@ -6,7 +6,33 @@ import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/preferences.dart';
 import 'package:orgro/src/notes_database.dart';
 
-PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
+
+
+
+
+
+
+class NotesDatabaseMenu extends StatefulWidget {
+  const NotesDatabaseMenu({super.key});
+
+  @override
+  State createState() => _NotesDatabaseMenuState();
+}
+
+class _NotesDatabaseMenuState extends State<NotesDatabaseMenu>
+    with NotesDatabaseState {
+  @override
+  Widget build(BuildContext context) {
+
+    return buildWithNotesDatabase(
+      builder: (context) {
+        return notesDatabaseMenuItem(context);
+      }
+    );
+  }
+}
+
+PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
   final prefs = Preferences.of(context);
   final scaffoldMessenger = ScaffoldMessenger.of(context);
 
@@ -22,8 +48,7 @@ PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
   //       2) rescan interval can be set
   //       3) manual rescan can be run
   //       4) progress of current rescan is shown?
-  return PopupMenuItem<VoidCallback>(
-    child: PopupMenuButton(
+  return PopupMenuButton(
       child: Text('Notes database…'), // TODO localize
       onSelected: (callback) => callback(),
       itemBuilder: (BuildContext context) => <PopupMenuEntry<VoidCallback>>[
@@ -56,7 +81,7 @@ PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
             //scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
             //NotesDirectory.of(context)
             final snackBarTest = SnackBar( // debug
-              content: Text('Test3'), // TODO localize
+              content: Text('Test5'), // TODO localize
               duration: const Duration(seconds: 1), // TODO standardize duration
             );
             scaffoldMessenger.showSnackBar(snackBarTest);
@@ -64,6 +89,5 @@ PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
           child: Text('Rescan notes'), // TODO localize
         ),
       ],
-    ),
   );
 }
