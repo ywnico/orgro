@@ -86,8 +86,8 @@ class NotesDatabase extends InheritedWidget {
 
 mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   Preferences get _prefs => Preferences.of(context);
-  //late NotesDirectory? _notesDirectory; // TODO..go back to this instead of null init?
-  NotesDirectory? _notesDirectory = null; // initialize to null....will it get loaded?
+  late NotesDirectory? _notesDirectory; // TODO initialize to null, just to be safe??
+  // NotesDirectory? _notesDirectory = null;
   _LifecycleEventHandler? _lifecycleEventHandler;
 
   bool get hasNotesDirectory => (_notesDirectory != null);
@@ -159,7 +159,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     } else {
 
       try {
-        NotesDirectory.fromJson(
+        _notesDirectory = NotesDirectory.fromJson(
             json.decode(ndJson)
         );
       } on Exception catch (e, s) {
@@ -169,6 +169,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       }
 
     }
+    debugPrint('Loaded notes dir: ${_notesDirectory?.name}');
   }
 
   void _onResume() {
