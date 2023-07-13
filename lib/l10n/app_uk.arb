@@ -4,6 +4,7 @@
   "menuItemAppearance": "Вигляд…",
   "menuItemClearCache": "Очистити кеш",
   "menuItemOrgroManual": "Посібник Orgro",
+  "menuItemSetNotesDirectory": "Встановити каталог нотаток…",
   "menuItemAbout": "Про застосунок",
 
   "appearanceModeAutomatic": "Автоматичний",

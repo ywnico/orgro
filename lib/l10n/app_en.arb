@@ -4,6 +4,7 @@
   "menuItemAppearance": "Appearance…",
   "menuItemClearCache": "Clear cache",
   "menuItemOrgroManual": "Orgro Manual",
+  "menuItemSetNotesDirectory": "Set notes directory…",
   "menuItemAbout": "About",
 
   "appearanceModeAutomatic": "Automatic",

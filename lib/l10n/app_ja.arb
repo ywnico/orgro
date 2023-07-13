@@ -4,6 +4,7 @@
   "menuItemAppearance": "外観…",
   "menuItemClearCache": "キャッシュを削除",
   "menuItemOrgroManual": "Orgroマニュアル",
+  "menuItemSetNotesDirectory": "メモのディレクトリを選ぶ…",
   "menuItemAbout": "アプリについて",
 
   "appearanceModeAutomatic": "自動",

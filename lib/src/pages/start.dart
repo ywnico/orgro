@@ -7,6 +7,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:orgro/src/actions/appearance.dart';
 import 'package:orgro/src/actions/cache.dart';
+import 'package:orgro/src/actions/notes_database.dart';
 import 'package:orgro/src/data_source.dart';
 import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/file_picker.dart';
@@ -61,6 +62,8 @@ class _StartPageState extends State<StartPage>
             child: Text(AppLocalizations.of(context)!.menuItemOrgroManual),
           ),
         ],
+        const PopupMenuDivider(),
+        notesDatabaseMenuItem(context),
         const PopupMenuDivider(),
         PopupMenuItem<VoidCallback>(
           value: () => openAboutDialog(context),
