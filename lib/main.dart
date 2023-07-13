@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:orgro/src/appearance.dart';
+import 'package:orgro/src/notes_database.dart';
 import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/pages/pages.dart';
 import 'package:orgro/src/preferences.dart';
@@ -53,39 +54,44 @@ class _MyApp extends StatefulWidget {
   State createState() => _MyAppState();
 }
 
-class _MyAppState extends State<_MyApp> with AppearanceState {
+class _MyAppState extends State<_MyApp> with AppearanceState, NotesDatabaseState {
   @override
   Widget build(BuildContext context) {
-    return buildWithAppearance(builder: (context) {
-      return MaterialApp(
-        restorationScopeId: 'orgro_root',
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        debugShowCheckedModeBanner: !kScreenshotMode,
-        onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
-        theme: ThemeData.from(
-          colorScheme: ColorScheme.light(
-            primary: _kPrimaryColor,
-            primaryContainer: _kPrimaryColorVariant,
-            onPrimary: Colors.white,
-            secondary: _kSecondaryColor,
-            secondaryContainer: _kSecondaryColorVariant,
-            onSecondary: Colors.white,
+    return buildWithAppearance(builder: (context)
+    {
+      return buildWithNotesDatabase(builder: (context) {
+        return MaterialApp(
+          restorationScopeId: 'orgro_root',
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          debugShowCheckedModeBanner: !kScreenshotMode,
+          onGenerateTitle: (context) => AppLocalizations.of(context)!.appTitle,
+          theme: ThemeData.from(
+            colorScheme: ColorScheme.light(
+              primary: _kPrimaryColor,
+              primaryContainer: _kPrimaryColorVariant,
+              onPrimary: Colors.white,
+              secondary: _kSecondaryColor,
+              secondaryContainer: _kSecondaryColorVariant,
+              onSecondary: Colors.white,
+            ),
           ),
-        ),
-        darkTheme: ThemeData.from(
-          colorScheme: ColorScheme.dark(
-            primary: _kPrimaryColor,
-            primaryContainer: _kPrimaryColorVariant,
-            onPrimary: Colors.white,
-            secondary: _kSecondaryColor,
-            secondaryContainer: _kSecondaryColorVariant,
-            onSecondary: Colors.white,
+          darkTheme: ThemeData.from(
+            colorScheme: ColorScheme.dark(
+              primary: _kPrimaryColor,
+              primaryContainer: _kPrimaryColorVariant,
+              onPrimary: Colors.white,
+              secondary: _kSecondaryColor,
+              secondaryContainer: _kSecondaryColorVariant,
+              onSecondary: Colors.white,
+            ),
           ),
-        ),
-        themeMode: Appearance.of(context).mode,
-        home: const StartPage(),
-      );
+          themeMode: Appearance
+              .of(context)
+              .mode,
+          home: const StartPage(),
+        );
+      });
     });
   }
 }

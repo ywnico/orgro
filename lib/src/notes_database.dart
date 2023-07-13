@@ -86,7 +86,8 @@ class NotesDatabase extends InheritedWidget {
 
 mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   Preferences get _prefs => Preferences.of(context);
-  late NotesDirectory? _notesDirectory;
+  //late NotesDirectory? _notesDirectory; // TODO..go back to this instead of null init?
+  NotesDirectory? _notesDirectory = null; // initialize to null....will it get loaded?
   _LifecycleEventHandler? _lifecycleEventHandler;
 
   bool get hasNotesDirectory => (_notesDirectory != null);
@@ -133,6 +134,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     super.initState();
     _lifecycleEventHandler ??= _LifecycleEventHandler(onResume: _onResume);
     WidgetsBinding.instance.addObserver(_lifecycleEventHandler!);
+    _load();
   }
 
   @override
@@ -144,19 +146,28 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+
     // Doing this here instead of [initState] because we need to pull in an
     // InheritedWidget
     _load();
   }
 
-  void _load() {
+  Future<void> _load() async {
     String? ndJson = _prefs.notesDirectoryJson;
     if (ndJson == null) {
       _notesDirectory = null;
     } else {
-      NotesDirectory.fromJson(
-          json.decode(ndJson)
-      );
+
+      try {
+        NotesDirectory.fromJson(
+            json.decode(ndJson)
+        );
+      } on Exception catch (e, s) {
+        logError(e, s);
+        // there was some error, so we'll reset notes directory to null
+        _notesDirectory = null;
+      }
+
     }
   }
 

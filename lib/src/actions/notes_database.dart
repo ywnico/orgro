@@ -6,11 +6,7 @@ import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/preferences.dart';
 import 'package:orgro/src/notes_database.dart';
 
-
-
-
-
-
+// TODO not currently using state for NotesDatabaseMenu, so make stateless
 
 class NotesDatabaseMenu extends StatefulWidget {
   const NotesDatabaseMenu({super.key});
@@ -20,15 +16,10 @@ class NotesDatabaseMenu extends StatefulWidget {
 }
 
 class _NotesDatabaseMenuState extends State<NotesDatabaseMenu>
-    with NotesDatabaseState {
+{
   @override
   Widget build(BuildContext context) {
-
-    return buildWithNotesDatabase(
-      builder: (context) {
         return notesDatabaseMenuItem(context);
-      }
-    );
   }
 }
 
