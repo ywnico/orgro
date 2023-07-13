@@ -36,6 +36,9 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
   final prefs = Preferences.of(context);
   final scaffoldMessenger = ScaffoldMessenger.of(context);
 
+  final notesDatabase = NotesDatabase.of(context);
+  final String curNotesDirName = notesDatabase.notesDirectory?.name ?? 'No current notes dir.';
+
   // TODO change message as necessary
   final snackBarRescanNotesBegun = SnackBar(
     content: Text('Notes rescan initiated…'), // TODO localize
@@ -65,10 +68,10 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
               debugPrint('chosenDir: ${chosenDir?.name}');
               // TODO notify user that change was made
 
-              // TODO update notes directory preference
-
+              // update notes directory preference
+              // TODO make async? no await since void....
+              notesDatabase.setNotesDirectoryFromNativeDirectoryInfo(chosenDir);
               //await prefs.setRemoteImagesPolicy(kDefaultRemoteImagesPolicy);
-              //scaffoldMessenger.showSnackBar(snackBari1);
             }
           },
           child: Text(AppLocalizations.of(context)!.menuItemSetNotesDirectory),
@@ -81,7 +84,7 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
             //scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
             //NotesDirectory.of(context)
             final snackBarTest = SnackBar( // debug
-              content: Text('Test5'), // TODO localize
+              content: Text(curNotesDirName), // TODO localize
               duration: const Duration(seconds: 1), // TODO standardize duration
             );
             scaffoldMessenger.showSnackBar(snackBarTest);

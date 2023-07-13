@@ -9,11 +9,18 @@ import 'package:orgro/src/file_picker.dart';
 import 'package:orgro/src/preferences.dart';
 import 'package:orgro/src/util.dart';
 
+import 'data_source.dart';
+
 class NotesDirectory {
   NotesDirectory.fromJson(Map<String, dynamic> json)
       : this(
     json['identifier'] as String,
     json['name'] as String,
+  );
+  NotesDirectory.fromNativeDirectoryInfo(NativeDirectoryInfo ndi)
+      : this(
+    ndi.identifier,
+    ndi.name,
   );
 
   NotesDirectory(this.identifier, this.name);
@@ -55,6 +62,7 @@ class NotesDatabase extends InheritedWidget {
       // TODO add id link database
       {
         required this.setNotesDirectory,
+        required this.setNotesDirectoryFromNativeDirectoryInfo,
         required this.removeNotesDirectory,
         required super.child,
         super.key,
@@ -62,12 +70,14 @@ class NotesDatabase extends InheritedWidget {
 
   final NotesDirectory? notesDirectory;
   final ValueChanged<NotesDirectory> setNotesDirectory;
+  final ValueChanged<NativeDirectoryInfo> setNotesDirectoryFromNativeDirectoryInfo;
   final Function removeNotesDirectory; // TODO is this the right type?
 
   @override
   bool updateShouldNotify(NotesDatabase oldWidget) =>
       notesDirectory != oldWidget.notesDirectory ||
           setNotesDirectory != oldWidget.setNotesDirectory ||
+          setNotesDirectoryFromNativeDirectoryInfo != oldWidget.setNotesDirectoryFromNativeDirectoryInfo ||
           removeNotesDirectory != oldWidget.removeNotesDirectory;
 
   static NotesDatabase of(BuildContext context) =>
@@ -89,13 +99,24 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       _save(newNotesDirectory);
     }
   }
+  void setNotesDirectoryFromNativeDirectoryInfo(NativeDirectoryInfo ndi) {
+    setNotesDirectory(NotesDirectory.fromNativeDirectoryInfo(ndi));
+  }
 
-  void removeNotesDirectory() {
+  Future<void> removeNotesDirectory() async {
     debugPrint('Removing notes directory');
     setState(() {
       _notesDirectory = null;
     });
     _prefs.removeNotesDirectory();
+
+    if (_notesDirectory != null) {
+      try {
+        await disposeNativeSourceIdentifier(_notesDirectory!.identifier);
+      } on Exception catch (e, s) {
+        logError(e, s);
+      }
+    }
   }
 
   void _save(NotesDirectory dir) {
@@ -147,6 +168,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     return NotesDatabase(
       _notesDirectory,
       setNotesDirectory: setNotesDirectory,
+      setNotesDirectoryFromNativeDirectoryInfo: setNotesDirectoryFromNativeDirectoryInfo,
       removeNotesDirectory: removeNotesDirectory,
       // Builder required to get NotesDatabase into context
       child: Builder(builder: builder),
