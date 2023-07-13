@@ -4,6 +4,7 @@ import 'package:orgro/src/file_picker.dart';
 import 'package:orgro/src/data_source.dart';
 import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/preferences.dart';
+import 'package:orgro/src/notes_database.dart';
 
 PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
   final prefs = Preferences.of(context);
@@ -12,10 +13,6 @@ PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
   // TODO change message as necessary
   final snackBarRescanNotesBegun = SnackBar(
     content: Text('Notes rescan initiated…'), // TODO localize
-    duration: const Duration(seconds: 1), // TODO standardize duration
-  );
-  final snackBarTest = SnackBar( // debug
-    content: Text('Test'), // TODO localize
     duration: const Duration(seconds: 1), // TODO standardize duration
   );
 
@@ -56,11 +53,13 @@ PopupMenuItem<VoidCallback> notesDatabaseMenuItem(BuildContext context) {
         PopupMenuItem<VoidCallback>(
           value: () async {
             //await prefs.setRemoteImagesPolicy(kDefaultRemoteImagesPolicy);
-            scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
-            await Future.delayed(Duration(seconds: 10), () {
-              scaffoldMessenger.showSnackBar(snackBarTest);
-            });
-
+            //scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
+            //NotesDirectory.of(context)
+            final snackBarTest = SnackBar( // debug
+              content: Text('Test3'), // TODO localize
+              duration: const Duration(seconds: 1), // TODO standardize duration
+            );
+            scaffoldMessenger.showSnackBar(snackBarTest);
           },
           child: Text('Rescan notes'), // TODO localize
         ),

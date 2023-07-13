@@ -13,6 +13,7 @@ import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/file_picker.dart';
 import 'package:orgro/src/fonts.dart';
 import 'package:orgro/src/navigation.dart';
+import 'package:orgro/src/notes_database.dart';
 import 'package:orgro/src/pages/about.dart';
 import 'package:orgro/src/pages/recent_files.dart';
 import 'package:orgro/src/util.dart';
@@ -27,7 +28,7 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage>
-    with RecentFilesState, PlatformOpenHandler, RestorationMixin {
+    with RecentFilesState, NotesDirectoryState, PlatformOpenHandler, RestorationMixin {
   @override
   Widget build(BuildContext context) => UnmanagedRestorationScope(
       bucket: bucket,

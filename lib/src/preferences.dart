@@ -26,6 +26,7 @@ const _kRemoteImagesPolicyKey = 'remote_images_policy';
 const _kLocalLinksPolicyKey = 'local_links_policy';
 const _kRecentFilesJsonKey = 'recent_files_json';
 const _kAccessibleDirectoriesKey = 'accessible_directories_json';
+const _kNotesDirectoryKey = 'notes_directory_json';
 const _kFullWidthKey = 'full_width';
 
 const _kThemeModeKey = 'theme_mode';
@@ -60,6 +61,17 @@ class Preferences extends InheritedWidget {
 
   Future<bool> setRecentFilesJson(List<String> value) =>
       _prefs.setStringList(_kRecentFilesJsonKey, value);
+
+  String? get notesDirectoryJson =>
+      _prefs.getString(_kNotesDirectoryKey);
+
+  Future<bool> setNotesDirectoryJson(String value) {
+    return _prefs.setString(_kNotesDirectoryKey, value);
+  }
+
+  Future<bool> removeNotesDirectory() {
+    return _prefs.remove(_kNotesDirectoryKey);
+  }
 
   String? get themeMode => _prefs.getString(_kThemeModeKey);
 
