@@ -445,7 +445,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   }
 
   Widget buildWithNotesDatabase({required WidgetBuilder builder}) {
-    return NotesDatabase(
+    NotesDatabase ndb = NotesDatabase(
       _notesDirectory,
 
       orgFileList:_orgFileList,
@@ -459,6 +459,16 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       // Builder required to get NotesDatabase into context
       child: Builder(builder: builder),
     );
+
+    // do a rescan if it's been a while
+    if (_notesDirectory != null) {
+      if ((_lastScanDateTime == null) || (DateTime.now().difference(_lastScanDateTime as DateTime) > Duration(minutes:60))) {
+        debugPrint('Initiating new scan.');
+        ndb.scanDatabase();
+      }
+    }
+
+    return ndb;
   }
 
 }
