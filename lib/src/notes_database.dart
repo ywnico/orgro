@@ -371,13 +371,13 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     super.initState();
     _lifecycleEventHandler ??= _LifecycleEventHandler(onResume: _onResume);
     WidgetsBinding.instance.addObserver(_lifecycleEventHandler!);
-    _load();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(_lifecycleEventHandler!);
     super.dispose();
+    // TODO dispose of items....
   }
 
   @override
