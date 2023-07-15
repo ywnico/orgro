@@ -64,6 +64,10 @@ class NotesDatabase extends InheritedWidget {
       this.notesDirectory,
       // TODO add id link database
       {
+        this.orgFileList = const [],
+        this.idLinkFileIdMap = const {},
+        this.lastScanDateTime = null,
+
         required this.setNotesDirectory,
         required this.setNotesDirectoryFromNativeDirectoryInfo,
         required this.removeNotesDirectory,
@@ -72,21 +76,26 @@ class NotesDatabase extends InheritedWidget {
       });
 
   final NotesDirectory? notesDirectory;
+  final List<File> orgFileList;
+  // Keys are id (from id links), values are files (we're assuming no duplicates sorry)
+  final Map<String, String> idLinkFileIdMap;
+  DateTime? lastScanDateTime;
+
   final ValueChanged<NotesDirectory> setNotesDirectory;
   final ValueChanged<NativeDirectoryInfo> setNotesDirectoryFromNativeDirectoryInfo;
   final Function removeNotesDirectory; // TODO is this the right type?
 
-  List<File> orgFileList = [];
-  // Keys are id (from id links), values are files (we're assuming no duplicates sorry)
-  Map<String, String> idLinkFileIdMap = {};
+
   bool scanInProgress = false;
-  // TODO scan start time
   int scanProgressNumerator = 0;
   int scanProgressDenominator = 0;
+  // TODO scan start time
 
   @override
   bool updateShouldNotify(NotesDatabase oldWidget) =>
       notesDirectory != oldWidget.notesDirectory ||
+          orgFileList != oldWidget.orgFileList ||
+          idLinkFileIdMap != oldWidget.idLinkFileIdMap ||
           setNotesDirectory != oldWidget.setNotesDirectory ||
           setNotesDirectoryFromNativeDirectoryInfo != oldWidget.setNotesDirectoryFromNativeDirectoryInfo ||
           removeNotesDirectory != oldWidget.removeNotesDirectory;
@@ -174,8 +183,13 @@ class NotesDatabase extends InheritedWidget {
 
     scanInProgress = true;
 
+    bool aborted = false;
+    Map<String, String> idLinkFileIdMapNew = {};
     try {
-      orgFileList = await getOrgFilesFromDirectory();
+
+      // Clear org file list
+      orgFileList.removeRange(0, orgFileList.length);
+      orgFileList.addAll(await getOrgFilesFromDirectory());
 
       scanProgressNumerator = 0;
       scanProgressDenominator = orgFileList.length;
@@ -193,13 +207,25 @@ class NotesDatabase extends InheritedWidget {
         debugPrint('ids: $thisIds');
         for (String id in thisIds) {
           // TODO deal with duplicates?
-          idLinkFileIdMap[id] = thisFile.uri.toString();
+          idLinkFileIdMapNew[id] = thisFile.uri.toString();
         }
 
         scanProgressNumerator += 1;
       }
+
+      lastScanDateTime = DateTime.now();
     } on Exception catch (e, s) {
+      aborted = true;
       logError(e, s);
+    }
+
+    // if the scan process ran into an error, just update the ids we did manage to find
+    // if it did not run into an error, clear the old idLinkFileIdMap first.
+    if (!aborted) {
+      idLinkFileIdMap.removeWhere((k, v) => true);
+    }
+    for (MapEntry<String,String> m in idLinkFileIdMapNew.entries) {
+      idLinkFileIdMap[m.key] = m.value;
     }
 
     scanInProgress = false;
@@ -211,15 +237,24 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   Preferences get _prefs => Preferences.of(context);
   late NotesDirectory? _notesDirectory; // TODO initialize to null, just to be safe??
   // NotesDirectory? _notesDirectory = null;
+
+  late List<File> _orgFileList;
+  late Map<String, String> _idLinkFileIdMap;
+  late DateTime? _lastScanDateTime;
+
+
+
   _LifecycleEventHandler? _lifecycleEventHandler;
 
-  bool get hasNotesDirectory => (_notesDirectory != null);
+  //bool get hasNotesDirectory => (_notesDirectory != null);
 
   void setNotesDirectory(NotesDirectory newNotesDirectory) {
     if (newNotesDirectory == _notesDirectory) {
       debugPrint('Same notes directory selected: $newNotesDirectory');
     } else {
       debugPrint('Setting notes directory: $newNotesDirectory');
+      // TODO clear old org file list, scan info, and id link file map
+      // TODO also abort scan in progress....
       _save(newNotesDirectory);
     }
   }
@@ -229,10 +264,16 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
 
   Future<void> removeNotesDirectory() async {
     debugPrint('Removing notes directory');
+
+    // TODO also abort scan in progress....
     setState(() {
       _notesDirectory = null;
+      _orgFileList = [];
+      _idLinkFileIdMap = {};
+      _lastScanDateTime = null;
     });
     _prefs.removeNotesDirectory();
+    // TODO prefs remove org file list and id link map
 
     if (_notesDirectory != null) {
       try {
@@ -246,10 +287,14 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   void _save(NotesDirectory dir) {
     setState(() {
       _notesDirectory = dir;
+      _orgFileList = [];
+      _idLinkFileIdMap = {};
+      _lastScanDateTime = null;
     });
     _prefs.setNotesDirectoryJson(
         json.encode(dir.toJson())
     );
+    // TODO prefs remove org file list and id link map
   }
 
   @override
@@ -279,6 +324,9 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     String? ndJson = _prefs.notesDirectoryJson;
     if (ndJson == null) {
       _notesDirectory = null;
+      _orgFileList = [];
+      _idLinkFileIdMap = {};
+      _lastScanDateTime = null;
     } else {
 
       try {
@@ -291,6 +339,11 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
         _notesDirectory = null;
       }
 
+      // TODO: save and load from json
+      _orgFileList = [];
+      _idLinkFileIdMap = {};
+      _lastScanDateTime = null;
+
     }
     debugPrint('Loaded notes dir: ${_notesDirectory?.name}');
   }
@@ -302,6 +355,11 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
   Widget buildWithNotesDatabase({required WidgetBuilder builder}) {
     return NotesDatabase(
       _notesDirectory,
+
+      orgFileList:_orgFileList,
+      idLinkFileIdMap:_idLinkFileIdMap,
+      lastScanDateTime:_lastScanDateTime,
+
       setNotesDirectory: setNotesDirectory,
       setNotesDirectoryFromNativeDirectoryInfo: setNotesDirectoryFromNativeDirectoryInfo,
       removeNotesDirectory: removeNotesDirectory,

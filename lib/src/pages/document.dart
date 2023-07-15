@@ -14,6 +14,7 @@ import 'package:orgro/src/pages/view_settings.dart';
 import 'package:orgro/src/preferences.dart';
 import 'package:orgro/src/util.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:orgro/src/notes_database.dart';
 
 const _kBigScreenDocumentPadding = EdgeInsets.all(16);
 
@@ -372,6 +373,39 @@ class _DocumentPageState extends State<DocumentPage> with ViewSettingsState {
       return _openFileLink(link);
     } on Exception {
       // Wasn't a file link
+    }
+
+    // Handle id links
+    if (url.toLowerCase().startsWith('id:')) {
+      final notesDatabase = NotesDatabase.of(context);
+
+      if (notesDatabase.notesDirectory == null) {
+        showErrorSnackBar(context, 'Cannot follow id link; notes directory not set.'); // TODO localize
+        return false;
+      }
+
+      String idLink = url.substring('id:'.length);
+
+      if (notesDatabase.idLinkFileIdMap.containsKey(idLink)) {
+        // TODO follow link
+        showErrorSnackBar(context, 'Link to file: ${notesDatabase.idLinkFileIdMap[idLink]}'); // TODO localize
+        return false;
+      } else {
+        if (notesDatabase.lastScanDateTime == null) {
+          if (notesDatabase.scanInProgress) {
+            showErrorSnackBar(context,
+                'Cannot follow id link; please wait for directory scan to complete.'); // TODO localize
+            return false;
+          } else {
+            showErrorSnackBar(context,
+                'Cannot follow id link; notes directory not scanned.'); // TODO localize
+            return false;
+          }
+        }
+        showErrorSnackBar(context, 'No file found for id link.'); // TODO localize
+        return false;
+      }
+
     }
 
     // Handle as a general URL
