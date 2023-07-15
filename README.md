@@ -1,6 +1,15 @@
-[<img src="https://orgro.org/assets/appstore.png" alt="Download on the App Store" height="60">](https://apps.apple.com/us/app/orgro/id1512580074?uo=4) [<img src="https://orgro.org/assets/playstore.png" alt="Get it on Google Play" height="60">](https://play.google.com/store/apps/details?id=com.madlonkay.orgro) [<img src="https://orgro.org/assets/fdroid.png" alt="Get it on F-Droid" height="60">](https://f-droid.org/packages/com.madlonkay.orgro/)
+# Orgro + id links
+This is an Android-only fork of Orgro to enable cross-file `id:` links, for use with, e.g., [org-roam](https://github.com/org-roam/org-roam). The user may select a notes directory, and all contained files are scanned for `id:` links. Backlinks are not yet implemented.
+
+- Unfortunately it requires enabling the `MANAGE_EXTERNAL_STORAGE` permission.
+- I made this for my personal use and I have limited experience with Flutter and Android development, so it's very hacky (especially since the directory scanning is done in a way incompatible with `FilePickerWritable`). I haven't done any testing except on my personal device.
+- For the above reasons, I think it is not currently upstreamable.
+
+_-ywnico_
 
 # Orgro
+
+[<img src="https://orgro.org/assets/appstore.png" alt="Download on the App Store" height="60">](https://apps.apple.com/us/app/orgro/id1512580074?uo=4) [<img src="https://orgro.org/assets/playstore.png" alt="Get it on Google Play" height="60">](https://play.google.com/store/apps/details?id=com.madlonkay.orgro) [<img src="https://orgro.org/assets/fdroid.png" alt="Get it on F-Droid" height="60">](https://f-droid.org/packages/com.madlonkay.orgro/)
 
 An [Org Mode](https://orgmode.org/) file viewer for iOS and Android
 
