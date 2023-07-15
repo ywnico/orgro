@@ -8,6 +8,7 @@ import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/file_picker.dart';
 import 'package:orgro/src/preferences.dart';
 import 'package:orgro/src/util.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'data_source.dart';
 
@@ -82,6 +83,38 @@ class NotesDatabase extends InheritedWidget {
 
   static NotesDatabase of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<NotesDatabase>()!;
+
+
+  ////////// Scan and parse id links in all files //////////
+  // TODO
+
+  Future<List<String>> getOrgFilesFromDirectory() async {
+    List<String> output = [];
+
+    if (notesDirectory?.identifier != null) {
+      // NOTE android by default only allows listing media files. We have to specifically ask for permission for file access.
+      if (await Permission.manageExternalStorage.request().isGranted) {
+        try {
+          String absNotesDir = _absolutePathFromContentURI(notesDirectory!.identifier);
+
+          Directory dir = Directory(absNotesDir);
+          List<FileSystemEntity> entities = await dir.list(recursive: true)
+              .where((e) => (
+              (e is File) & (e.path.toLowerCase().endsWith(".org"))
+              )
+             ).toList();
+
+          //output.add(entities.length.toString());
+          output.addAll(entities.map((e) => (e.toString())));
+        } on Exception catch (e, s) {
+          logError(e, s);
+        }
+      }
+    }
+
+    return output;
+  }
+
 }
 
 mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
@@ -204,5 +237,32 @@ class _LifecycleEventHandler extends WidgetsBindingObserver {
       default:
       // Nothing
     }
+  }
+}
+
+// Some sketchy code to try to get the absolute path of the notes directory
+// This has been designed only for Android 13 and internal storage so....not reliable
+// TODO replace with something better
+String _absolutePathFromContentURI(String uriStr) {
+  String? absPath = null;
+
+  Uri uri = Uri.parse(uriStr);
+  if (uriStr.startsWith('file:///')) {
+    absPath = uriStr.substring('file://'.length);
+  } else if (uriStr.startsWith('content://')) {
+    String uriPath = uri.pathSegments.last;
+
+    // we only know how to deal with 'primary:blah/blah/blah'
+    List<String> uriPathPieces = uriPath.split(":");
+    if ((uriPathPieces.length == 2) && (uriPathPieces[0] == 'primary')) {
+      return '/storage/emulated/0/${uriPathPieces[1]}';
+    }
+  }
+
+  if (absPath == null) {
+    debugPrint('Could not convert notes directory URI to absolute path: $uriStr');
+    throw const FormatException('Could not parse notes directory URI.');
+  } else {
+    return absPath;
   }
 }

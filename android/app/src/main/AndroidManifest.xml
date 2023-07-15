@@ -2,9 +2,8 @@
           xmlns:tools="http://schemas.android.com/tools"
           package="com.madlonkay.orgro">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- Remove unneeded permission coming from file_picker_writable; see
-         https://github.com/hpoul/file_picker_writable/issues/15 -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
+    <!-- add MANAGE_EXTERNAL_STORAGE permission to scan notes directory -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <application
         android:label="${displayName}"
         android:name="${applicationName}"

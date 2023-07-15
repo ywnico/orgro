@@ -71,12 +71,14 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
         // rescan notes directory
         PopupMenuItem<VoidCallback>(
           value: () async {
-            //await prefs.setRemoteImagesPolicy(kDefaultRemoteImagesPolicy);
-            //scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
-            //NotesDirectory.of(context)
+            // TODO This is basically all debug testing stuff
+            List<String> testList = await notesDatabase.getOrgFilesFromDirectory();
+            String testString = testList.join("\n");
+
+
             final snackBarTest = SnackBar( // debug
-              content: Text(curNotesDirName), // TODO localize
-              duration: const Duration(seconds: 1), // TODO standardize duration
+              content: Text(curNotesDirName + ":" + testString), // TODO localize
+              duration: const Duration(seconds: 3), // TODO standardize duration
             );
             scaffoldMessenger.showSnackBar(snackBarTest);
           },
