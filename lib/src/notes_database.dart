@@ -72,6 +72,7 @@ class NotesDatabase extends InheritedWidget {
         required this.setNotesDirectory,
         required this.setNotesDirectoryFromNativeDirectoryInfo,
         required this.removeNotesDirectory,
+        required this.setMapData,
         required super.child,
         super.key,
       });
@@ -85,6 +86,7 @@ class NotesDatabase extends InheritedWidget {
   final ValueChanged<NotesDirectory> setNotesDirectory;
   final ValueChanged<NativeDirectoryInfo> setNotesDirectoryFromNativeDirectoryInfo;
   final Function removeNotesDirectory; // TODO is this the right type?
+  final Function setMapData; // TODO is this the right type?
 
 
   bool scanInProgress = false;
@@ -99,14 +101,14 @@ class NotesDatabase extends InheritedWidget {
           idLinkFileIdMap != oldWidget.idLinkFileIdMap ||
           setNotesDirectory != oldWidget.setNotesDirectory ||
           setNotesDirectoryFromNativeDirectoryInfo != oldWidget.setNotesDirectoryFromNativeDirectoryInfo ||
-          removeNotesDirectory != oldWidget.removeNotesDirectory;
+          removeNotesDirectory != oldWidget.removeNotesDirectory ||
+          setMapData != oldWidget.setMapData;
 
   static NotesDatabase of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<NotesDatabase>()!;
 
 
   ////////// Scan and parse id links in all files //////////
-  // TODO
 
   Future<List<File>> getOrgFilesFromDirectory() async {
     List<File> output = [];
@@ -228,6 +230,9 @@ class NotesDatabase extends InheritedWidget {
     for (MapEntry<String,String> m in idLinkFileIdMapNew.entries) {
       idLinkFileIdMap[m.key] = m.value;
     }
+    if (!aborted) {
+      setMapData(idLinkFileIdMap, lastScanDateTime);
+    }
 
     scanInProgress = false;
   }
@@ -292,11 +297,15 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       debugPrint('Setting notes directory: $newNotesDirectory');
       // TODO clear old org file list, scan info, and id link file map
       // TODO also abort scan in progress....
-      _save(newNotesDirectory);
+      _saveNotesDirectory(newNotesDirectory);
     }
   }
   void setNotesDirectoryFromNativeDirectoryInfo(NativeDirectoryInfo ndi) {
     setNotesDirectory(NotesDirectory.fromNativeDirectoryInfo(ndi));
+  }
+
+  void setMapData(Map<String, String> idLinkFileIdMap, DateTime? lastScanDateTime) {
+    _saveMapData(idLinkFileIdMap, lastScanDateTime);
   }
 
   Future<void> removeNotesDirectory() async {
@@ -310,7 +319,9 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       _lastScanDateTime = null;
     });
     _prefs.removeNotesDirectory();
-    // TODO prefs remove org file list and id link map
+    _prefs.removeOrgFileList();
+    _prefs.removeIdLinkFileIdMap();
+    _prefs.removeLastScanDateTime();
 
     if (_notesDirectory != null) {
       try {
@@ -321,7 +332,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     }
   }
 
-  void _save(NotesDirectory dir) {
+  void _saveNotesDirectory(NotesDirectory dir) {
     setState(() {
       _notesDirectory = dir;
       _orgFileList = [];
@@ -331,7 +342,28 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
     _prefs.setNotesDirectoryJson(
         json.encode(dir.toJson())
     );
-    // TODO prefs remove org file list and id link map
+    _prefs.removeOrgFileList();
+    _prefs.removeIdLinkFileIdMap();
+    _prefs.removeLastScanDateTime();
+  }
+
+  void _saveMapData(Map<String, String> idLinkFileIdMap, DateTime? lastScanDateTime) {
+    setState(() {
+      _idLinkFileIdMap = idLinkFileIdMap;
+      _lastScanDateTime = lastScanDateTime;
+    });
+
+    // TODO org file list
+
+    if (lastScanDateTime == null) {
+      _prefs.removeLastScanDateTime();
+    } else {
+      _prefs.setLastScanDateTimeInt(lastScanDateTime.millisecondsSinceEpoch);
+    }
+
+    _prefs.setIdLinkFileIdMapJson(
+        json.encode(idLinkFileIdMap)
+    );
   }
 
   @override
@@ -359,13 +391,13 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
 
   Future<void> _load() async {
     String? ndJson = _prefs.notesDirectoryJson;
-    if (ndJson == null) {
-      _notesDirectory = null;
-      _orgFileList = [];
-      _idLinkFileIdMap = {};
-      _lastScanDateTime = null;
-    } else {
 
+    _notesDirectory = null;
+    _orgFileList = [];
+    _idLinkFileIdMap = {};
+    _lastScanDateTime = null;
+
+    if (ndJson != null) {
       try {
         _notesDirectory = NotesDirectory.fromJson(
             json.decode(ndJson)
@@ -377,9 +409,32 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
       }
 
       // TODO: save and load from json
-      _orgFileList = [];
-      _idLinkFileIdMap = {};
-      _lastScanDateTime = null;
+      //String? orgFileListJson = _prefs.orgFileListJson;
+      String? idLinkFileIdMapJson = _prefs.idLinkFileIdMapJson;
+      int? lastScanDateTimeInt = _prefs.lastScanDateTimeInt;
+
+      if (
+      //(orgFileListJson == null) ||
+      (idLinkFileIdMapJson == null) ||
+          (lastScanDateTimeInt == null)) {
+        debugPrint('idLinkFileIdMapJson or lastScanDateTimeInt is null.');
+      } else {
+        try {
+          //_orgFileList = List.castFrom(json.decode(orgFileListJson));
+          _orgFileList = [];
+          debugPrint('Attempting to load id link file map');
+          _idLinkFileIdMap = Map.castFrom(json.decode(idLinkFileIdMapJson));
+          _lastScanDateTime = DateTime.fromMillisecondsSinceEpoch(lastScanDateTimeInt);
+          debugPrint('Loaded id link file map with ${_idLinkFileIdMap.length} items');
+
+        } on Exception catch (e, s) {
+          logError(e, s);
+          // there was some error, so we'll reset the id link map
+          _orgFileList = [];
+          _idLinkFileIdMap = {};
+          _lastScanDateTime = null;
+        }
+      }
 
     }
     debugPrint('Loaded notes dir: ${_notesDirectory?.name}');
@@ -399,6 +454,7 @@ mixin NotesDatabaseState<T extends StatefulWidget> on State<T> {
 
       setNotesDirectory: setNotesDirectory,
       setNotesDirectoryFromNativeDirectoryInfo: setNotesDirectoryFromNativeDirectoryInfo,
+      setMapData: setMapData,
       removeNotesDirectory: removeNotesDirectory,
       // Builder required to get NotesDatabase into context
       child: Builder(builder: builder),

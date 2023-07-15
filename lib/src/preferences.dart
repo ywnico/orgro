@@ -27,6 +27,9 @@ const _kLocalLinksPolicyKey = 'local_links_policy';
 const _kRecentFilesJsonKey = 'recent_files_json';
 const _kAccessibleDirectoriesKey = 'accessible_directories_json';
 const _kNotesDirectoryKey = 'notes_directory_json';
+const _kOrgFileListKey = 'org_file_list_json';
+const _kIdLinkFileIdMapKey = 'id_link_file_id_map_json';
+const _kLastScanDateTimeKey = 'last_scan_date_time_int';
 const _kFullWidthKey = 'full_width';
 
 const _kThemeModeKey = 'theme_mode';
@@ -71,6 +74,39 @@ class Preferences extends InheritedWidget {
 
   Future<bool> removeNotesDirectory() {
     return _prefs.remove(_kNotesDirectoryKey);
+  }
+
+  String? get orgFileListJson =>
+      _prefs.getString(_kOrgFileListKey);
+
+  Future<bool> setOrgFileListJson(String value) {
+    return _prefs.setString(_kOrgFileListKey, value);
+  }
+
+  Future<bool> removeOrgFileList() {
+    return _prefs.remove(_kOrgFileListKey);
+  }
+
+  String? get idLinkFileIdMapJson =>
+      _prefs.getString(_kIdLinkFileIdMapKey);
+
+  Future<bool> setIdLinkFileIdMapJson(String value) {
+    return _prefs.setString(_kIdLinkFileIdMapKey, value);
+  }
+
+  Future<bool> removeIdLinkFileIdMap() {
+    return _prefs.remove(_kIdLinkFileIdMapKey);
+  }
+
+  int? get lastScanDateTimeInt =>
+      _prefs.getInt(_kLastScanDateTimeKey);
+
+  Future<bool> setLastScanDateTimeInt(int value) {
+    return _prefs.setInt(_kLastScanDateTimeKey, value);
+  }
+
+  Future<bool> removeLastScanDateTime() {
+    return _prefs.remove(_kLastScanDateTimeKey);
   }
 
   String? get themeMode => _prefs.getString(_kThemeModeKey);
