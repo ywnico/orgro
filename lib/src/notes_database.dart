@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker_writable/file_picker_writable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_charset_detector/flutter_charset_detector.dart';
@@ -229,6 +230,42 @@ class NotesDatabase extends InheritedWidget {
     }
 
     scanInProgress = false;
+  }
+
+  Future<NativeDataSource?> contentNativeSourceFromAbsolutePath(String absPathIdentifier) async {
+    // I'm giving up on converting absolute paths to content paths for now....
+    // The downside is that we'll have duplicate entries in recent files....
+    /*
+    String absStoragePrefix = '/storage/emulated/0/';
+    String contentPrefix = 'content://com.android.externalstorage.documents/tree/primary';
+
+    List<String>absPathPieces = absPathIdentifier.split(absStoragePrefix);
+
+    if (absPathPieces.length <= 1) {
+      debugPrint(
+          'Could not convert note file path to content path: $absPathIdentifier');
+      throw const FormatException('Could not convert note file path.');
+    }
+    String mainPath = absPathPieces.sublist(1).join(absStoragePrefix);
+
+    List<String> mainPathSplit = mainPath.split('/');
+    String fileName = mainPathSplit.last;
+    String relativePath = mainPathSplit.sublist(0, mainPathSplit.length - 1).join('/');
+
+    final EntityInfo resolved = await FilePickerWritable().resolveRelativePath(
+        directoryIdentifier: '$contentPrefix/$relativePath', relativePath: fileName);
+     */
+
+    Uri uri = Uri.parse(absPathIdentifier);
+
+    return NativeDataSource(
+      uri.pathSegments.last,
+      absPathIdentifier,
+      absPathIdentifier,
+      persistable: true,
+    );
+
+    return null;
   }
 
 }

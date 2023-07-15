@@ -387,9 +387,16 @@ class _DocumentPageState extends State<DocumentPage> with ViewSettingsState {
       String idLink = url.substring('id:'.length);
 
       if (notesDatabase.idLinkFileIdMap.containsKey(idLink)) {
-        // TODO follow link
-        showErrorSnackBar(context, 'Link to file: ${notesDatabase.idLinkFileIdMap[idLink]}'); // TODO localize
-        return false;
+        String fileIdentifier = notesDatabase.idLinkFileIdMap[idLink] as String;
+        debugPrint('Link to file: fileIdentifier');
+        try {
+          final nds= await notesDatabase.contentNativeSourceFromAbsolutePath(fileIdentifier);
+          if (!mounted) return false;
+          return loadDocument(context, nds, target: 'id:$idLink');
+        } on Exception catch (e, s) {
+          logError(e, s);
+          showErrorSnackBar(context, e);
+        }
       } else {
         if (notesDatabase.lastScanDateTime == null) {
           if (notesDatabase.scanInProgress) {

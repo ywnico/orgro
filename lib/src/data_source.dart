@@ -92,12 +92,11 @@ class AssetDataSource extends DataSource {
 }
 
 class NativeDataSource extends DataSource {
-  NativeDataSource(
-    String name,
-    this.identifier,
-    this.uri, {
-    required this.persistable,
-  }) : super(name);
+  NativeDataSource(String name,
+      this.identifier,
+      this.uri, {
+        required this.persistable,
+      }) : super(name);
 
   /// The identifier used to read the file via native APIs
   final String identifier;
@@ -116,8 +115,26 @@ class NativeDataSource extends DataSource {
   String get id => uri;
 
   @override
-  FutureOr<String> get content => FilePickerWritable()
-      .readFile(identifier: identifier, reader: (_, file) => _readFile(file));
+  FutureOr<String> get content {
+    return filePickerOrDirectReader(identifier);
+  }
+
+  FutureOr<String> filePickerOrDirectReader(String identifier) async {
+    String output = '';
+    try {
+      return await FilePickerWritable().readFile(
+          identifier: identifier, reader: (_, file) => _readFile(file));
+    } on Exception {
+      if (identifier.toLowerCase().startsWith('file://')) {
+        File file = File(identifier.substring('file://'.length));
+        return await _readFile(file);
+      } else {
+        rethrow;
+      }
+    }
+    return output;
+
+  }
 
   @override
   FutureOr<Uint8List> get bytes => FilePickerWritable().readFile(
