@@ -36,6 +36,14 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
     duration: const Duration(seconds: 1), // TODO standardize duration
   );
 
+  // Get current rescan progress
+  // TODO: make live...?
+  // TODO: localize
+  String rescanString = 'Rescan notes';
+  if (notesDatabase.scanInProgress) {
+    rescanString = 'Scan progress: ${notesDatabase.scanProgressNumerator}/${notesDatabase.scanProgressDenominator}';
+  }
+
   // Currently this contains directory setting and force rescan submenu items.
   // TODO: reorganize into a popup window in which:
   //       1) current directory (if applicable) is displayed, along with a change option
@@ -71,18 +79,21 @@ PopupMenuButton notesDatabaseMenuItem(BuildContext context) {
         // rescan notes directory
         PopupMenuItem<VoidCallback>(
           value: () async {
-            // TODO This is basically all debug testing stuff
-            List<String> testList = await notesDatabase.getOrgFilesFromDirectory();
-            String testString = testList.join("\n");
+            scaffoldMessenger.showSnackBar(snackBarRescanNotesBegun);
 
+            // TODO This is basically all debug testing stuff
+            await notesDatabase.scanDatabase();
+
+            //List<File> testList = await notesDatabase.getOrgFilesFromDirectory();
+            //String testString = testList.map((f) => f.toString()).join("\n");
 
             final snackBarTest = SnackBar( // debug
-              content: Text(curNotesDirName + ":" + testString), // TODO localize
-              duration: const Duration(seconds: 3), // TODO standardize duration
+              content: Text('Scan complete.'), // TODO localize
+              duration: const Duration(seconds: 1), // TODO standardize duration
             );
             scaffoldMessenger.showSnackBar(snackBarTest);
           },
-          child: Text('Rescan notes'), // TODO localize
+          child: Text(rescanString),
         ),
       ],
   );

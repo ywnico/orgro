@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_charset_detector/flutter_charset_detector.dart';
+import 'package:org_flutter/org_flutter.dart';
 import 'package:orgro/src/debug.dart';
 import 'package:orgro/src/file_picker.dart';
 import 'package:orgro/src/preferences.dart';
@@ -58,7 +60,7 @@ class NotesDirectory {
 }
 
 class NotesDatabase extends InheritedWidget {
-  const NotesDatabase(
+  NotesDatabase(
       this.notesDirectory,
       // TODO add id link database
       {
@@ -74,6 +76,14 @@ class NotesDatabase extends InheritedWidget {
   final ValueChanged<NativeDirectoryInfo> setNotesDirectoryFromNativeDirectoryInfo;
   final Function removeNotesDirectory; // TODO is this the right type?
 
+  List<File> orgFileList = [];
+  // Keys are id (from id links), values are files (we're assuming no duplicates sorry)
+  Map<String, String> idLinkFileIdMap = {};
+  bool scanInProgress = false;
+  // TODO scan start time
+  int scanProgressNumerator = 0;
+  int scanProgressDenominator = 0;
+
   @override
   bool updateShouldNotify(NotesDatabase oldWidget) =>
       notesDirectory != oldWidget.notesDirectory ||
@@ -88,8 +98,8 @@ class NotesDatabase extends InheritedWidget {
   ////////// Scan and parse id links in all files //////////
   // TODO
 
-  Future<List<String>> getOrgFilesFromDirectory() async {
-    List<String> output = [];
+  Future<List<File>> getOrgFilesFromDirectory() async {
+    List<File> output = [];
 
     if (notesDirectory?.identifier != null) {
       // NOTE android by default only allows listing media files. We have to specifically ask for permission for file access.
@@ -105,7 +115,7 @@ class NotesDatabase extends InheritedWidget {
              ).toList();
 
           //output.add(entities.length.toString());
-          output.addAll(entities.map((e) => (e.toString())));
+          output.addAll(entities.map((e) => (e as File)));
         } on Exception catch (e, s) {
           logError(e, s);
         }
@@ -113,6 +123,86 @@ class NotesDatabase extends InheritedWidget {
     }
 
     return output;
+  }
+
+  // find id _links_ in a file
+  // TODO use this to produce backlink list
+  Future<List<String>> idOutLinksFromOrgDocument(OrgDocument od) async {
+    List<String> idLinks = [];
+
+    od.visit<OrgLink>((link) {
+      String linkLoc = link.location.trim();
+      if (linkLoc.toLowerCase().startsWith('id:')) {
+        String linkId = linkLoc.substring('id:'.length).trim();
+        if (!idLinks.contains(linkId)) {
+          idLinks.add(linkId);
+        }
+      }
+      return true;
+    });
+
+    return idLinks;
+  }
+
+  // find ids in a file (referring either to sections or to the whole file)
+  Future<List<String>> idsFromOrgDocument(OrgDocument od) async {
+    List<String> topLevelIds = [];
+    List<String> sectionIds = [];
+
+    // First, check if there is an id at the top level
+    List<OrgNode> topLevelChildren = od.content?.children ?? [];
+    for (OrgDrawer tlChild in topLevelChildren.whereType<OrgDrawer>()) {
+        List<OrgNode> drawerChildren = tlChild.body.children;
+        for (OrgProperty prop in drawerChildren.whereType<OrgProperty>()) {
+          if (prop.key.trim().toUpperCase() == ':ID:') {
+            topLevelIds.add(prop.value.trim());
+          }
+        }
+    }
+    od.visitSections((section) {
+      //debugPrint('${section.headline.title}');
+      //debugPrint('${section.ids}');
+      sectionIds.addAll(section.ids);
+      return true;
+    });
+    return topLevelIds + sectionIds;
+  }
+
+  Future<void> scanDatabase() async {
+    // TODO should probably deal with failed scans or something....
+    if (scanInProgress) return;
+
+    scanInProgress = true;
+
+    try {
+      orgFileList = await getOrgFilesFromDirectory();
+
+      scanProgressNumerator = 0;
+      scanProgressDenominator = orgFileList.length;
+
+      for (File thisFile in orgFileList) {
+        debugPrint('Scanning file $thisFile');
+        String content = await _readFile(thisFile);
+        OrgDocument od = await parse(content);
+
+        // TODO use outward links to determine backlinks
+        //List<String> thisIdOutLinks = await idOutLinksFromOrgDocument(od);
+        ////debugPrint('id links: $thisIdOutLinks');
+
+        List<String> thisIds = await idsFromOrgDocument(od);
+        debugPrint('ids: $thisIds');
+        for (String id in thisIds) {
+          // TODO deal with duplicates?
+          idLinkFileIdMap[id] = thisFile.uri.toString();
+        }
+
+        scanProgressNumerator += 1;
+      }
+    } on Exception catch (e, s) {
+      logError(e, s);
+    }
+
+    scanInProgress = false;
   }
 
 }
@@ -264,5 +354,16 @@ String _absolutePathFromContentURI(String uriStr) {
     throw const FormatException('Could not parse notes directory URI.');
   } else {
     return absPath;
+  }
+}
+
+Future<String> _readFile(File file) async {
+  try {
+    return await file.readAsString();
+  } on Exception {
+    final bytes = await file.readAsBytes();
+    final decoded = await CharsetDetector.autoDecode(bytes);
+    debugPrint('Decoded file as ${decoded.charset}');
+    return decoded.string;
   }
 }
